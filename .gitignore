@@ -1,3 +1,16 @@
+### 
+#README.md
+
+### CLion ###
+.idea
+cmake-build-debug-visual-studio
+cmake-build-release-visual-studio
+
+### Target ###
+!cmake-build-debug-visual-studio/Debug/
+!cmake-build-release-visual-studio/Release/
+
+
 # Prerequisites
 *.d
 
