@@ -3,29 +3,24 @@
 #include <memory>
 #include <variant>
 
-// Формула, позволяющая вычислять и обновлять арифметическое выражение.
-// Поддерживаемые возможности:
-// * Простые бинарные операции и числа, скобки: 1+2*3, 2.5*(2+3.5/7)
+//// A formula that evaluates and updates an arithmetic expression.
+//// Supported: Simple binary operations and numbers, brackets: 1+2*3, 2.5*(2+3.5/7)
 class FormulaInterface {
 public:
     using Value = std::variant<double, FormulaError>;
 
     virtual ~FormulaInterface() = default;
 
-    // Возвращает вычисленное значение формулы либо ошибку. На данном этапе
-    // мы создали только 1 вид ошибки -- деление на 0.
+    // Returns the calculated value or an error
     [[maybe_unused]] [[nodiscard]] virtual Value Evaluate(const SheetInterface& sheet) const = 0;
 
-    // Возвращает выражение, которое описывает формулу.
-    // Не содержит пробелов и лишних скобок.
+    // Returns an expression. Does not contain spaces or extra parentheses
     [[maybe_unused]] [[nodiscard]] virtual std::string GetExpression() const = 0;
 
 
-    // Возвращает список ячеек, которые непосредственно задействованы в вычислении
-    // формулы. Список отсортирован по возрастанию и не содержит повторяющихся ячеек.
+    // Returns a list of cells that are used for in the formula calculation with no duplicate cells
     [[nodiscard]] virtual std::vector<Position> GetReferencedCells() const = 0;
 };
 
-// Парсит переданное выражение и возвращает объект формулы.
-// Бросает FormulaException в случае, если формула синтаксически некорректна.
+// Parses the expression and returns the formula object. Throws FormulaException if the formula is syntactically incorrect.
 [[maybe_unused]] std::unique_ptr<FormulaInterface> ParseFormula(std::string expression);

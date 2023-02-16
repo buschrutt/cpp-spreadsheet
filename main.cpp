@@ -1,6 +1,6 @@
 #include <utility>
 
-#include "cell.h" // ???
+#include "cell.h"
 #include "common.h"
 #include "formula.h"
 #include "test_runner_p.h"
@@ -337,105 +337,46 @@ namespace {
         ASSERT_EQUAL(sheet->GetCell("M6"_pos)->GetText(), "Ready")
     }
 
-    void TestSetGetCellFormulaValid() {
+    void TestCustomCoutOutput() {
         auto sheet = CreateSheet();
-        auto checkCell = [&sheet](Position pos, std::string text) {
+        auto try_formula = [&sheet](Position pos, std::string text) {
             sheet->SetCell(pos, std::move(text));
-            {
-                CellInterface* cell = sheet->GetCell(pos);
-                assert(cell != nullptr);
-                std::cout << cell->GetText() << std::endl;
-                std::cout << std::get<double>(cell->GetValue()) << std::endl;
-            } {
-            const auto& sheet_c = sheet;
-            CellInterface* cell = sheet_c->GetCell(pos);
-            assert(cell != nullptr);
-            std::cout << cell->GetText() << std::endl;
-            std::cout << std::get<double>(cell->GetValue()) << std::endl;
-        }
-        };
-        checkCell("A1"_pos, "=1");
-        checkCell("A1"_pos, "=1+2");
-        checkCell("B2"_pos, "=1/2");
-        checkCell("A3"_pos, "=(1+1)/-1");
-        checkCell("C3"_pos, "=(1+1)/(+1)");
-    }
-
-    void TestSetGetCellCellRef() {
-        auto sheet = CreateSheet();
-        auto checkCell = [&sheet](Position pos, std::string text) {
-            sheet->SetCell(pos, std::move(text));
-            {
-                CellInterface* cell = sheet->GetCell(pos);
-                assert(cell != nullptr);
-                std::cout << cell->GetText() << std::endl;
-                std::cout << std::get<double>(cell->GetValue()) << std::endl;
-            } {
-            const auto& sheet_c = sheet;
-            CellInterface* cell = sheet_c->GetCell(pos);
-            assert(cell != nullptr);
-            std::cout << cell->GetText() << std::endl;
-            std::cout << std::get<double>(cell->GetValue()) << std::endl;
-        }
-        };
-
-        checkCell("A1"_pos, "=1");
-        checkCell("B2"_pos, "=1/2");
-        checkCell("A3"_pos, "=(1+1)/-1");
-        checkCell("C3"_pos, "=(1+1)/(+1)");
-
-        checkCell("A2"_pos, "=A1");
-        checkCell("B3"_pos, "=B2+(12/3 - 2)");
-        checkCell("A4"_pos, "=A3+C3");
-        checkCell("C4"_pos, "=C3 + B2 / C3");
-        checkCell("D1"_pos, "=A1 + A1");
-    }
-
-    void TestSetGetCellFormulaZeroDivision() {
-        auto sheet = CreateSheet();
-        auto checkCell = [&sheet](Position pos, std::string text) {
-            sheet->SetCell(pos, std::move(text)); /// --!-- check here
-            {
-                CellInterface* cell = sheet->GetCell(pos);
-                assert(cell != nullptr);
-                std::cout << cell->GetText() << std::endl;
+            auto cell = sheet->GetCell(pos);
+            std::cout << "cell-text--: " + cell->GetText() << "  cell-value--:";
+            if (std::holds_alternative<FormulaError>(cell->GetValue())) {
                 std::cout << std::get<FormulaError>(cell->GetValue()) << std::endl;
-            } {
-            const auto& sheet_c = sheet;
-            CellInterface* cell = sheet_c->GetCell(pos);
-            assert(cell != nullptr);
-            std::cout << cell->GetText() << std::endl;
-            std::cout << std::get<FormulaError>(cell->GetValue()) << std::endl;
-        }
-        };
+            } else {
+                std::cout << std::get<double>(cell->GetValue()) << std::endl;
+            }
 
-        checkCell("A1"_pos, "=1/0");
-        checkCell("A1"_pos, "=0/0");
-
-        checkCell("B1"_pos, "=1/(1-1)");
-        checkCell("B1"_pos, "=0/(1-1)");
-        checkCell("B1"_pos, "=(1-1)/(1-1)");
-
-        checkCell("C1"_pos, "=1+1/(1-1)");
-        checkCell("C1"_pos, "=1+0/(1-1)");
-        checkCell("C1"_pos, "=1+(1-1)/(1-1)");
-
-        checkCell("D1"_pos, "=1/(1-1)+1");
-        checkCell("D1"_pos, "=0/(1-1)+1");
-        checkCell("D1"_pos, "=(1-1)/(1-1)+1");
-    }
-
-    void TestPachkaHelps() {
-        auto sheet = CreateSheet();
-        Position pos = "A1"_pos;
-        sheet->SetCell(pos, "=1/1");
-        CellInterface* cell = sheet->GetCell(pos);
-        std::cout << cell->GetText() << std::endl;
-        std::cout << std::get<double>(cell->GetValue()) << std::endl;
+    };
+        std::cout << " -- flag-line-- 2, 6, 0.8, -3, 0.5 --" << std::endl;
+        try_formula("A1"_pos, "=2");
+        try_formula("B2"_pos, "=2*3");
+        try_formula("C3"_pos, "=4/5");
+        try_formula("D4"_pos, "=(4+5)/(2-5)");
+        try_formula("E5"_pos, "=(5-4)/(2)");
+        std::cout << "\n -- flag-line-- 8, 3, -3, 9, 2 --" << std::endl;
+        try_formula("A2"_pos, "=A1+B2");
+        try_formula("B3"_pos, "=B2/A1*(C3+0.2)");
+        try_formula("C4"_pos, "=B2/A1*(-C3-0.2)");
+        try_formula("D5"_pos, "=B2+B3*(C3+0.2)");
+        try_formula("E6"_pos, "=(-E5*2)+B2/A1*(C3+0.2)");
+        std::cout << "\n -- flag-line-- 4, 2, 6.5, 0.5 " << std::endl;
+        try_formula("A1"_pos, "=2*2");
+        try_formula("B2"_pos, "=1+1");
+        try_formula("F1"_pos, "=A2+B3"); // A2=6, B3=0.5 =6.5
+        try_formula("F2"_pos, "=(D5+C4)/A1"); // D5=2.5, C4=-0.5, A1=4 =0.5
+        std::cout << "\n -- flag-line-- #DEV0! " << std::endl;
+        try_formula("A1"_pos, "=1/0");
+        try_formula("A1"_pos, "=0/0");
+        try_formula("B1"_pos, "=1/(1-1)");
+        try_formula("B1"_pos, "=0/((1+1)-2)");
+        try_formula("B1"_pos, "=1-1/((1*2)-2)");
+        try_formula("B1"_pos, "=1*1/(1/0)");
     }
 
 }  // namespace
-
 
 int main() {
     TestRunner tr;
@@ -459,9 +400,6 @@ int main() {
     RUN_TEST(tr, TestCellReferences); /// --Ok
     RUN_TEST(tr, TestFormulaIncorrect); /// --Ok
     RUN_TEST(tr, TestCellCircularReferences); /// --Ok
-    RUN_TEST(tr, TestSetGetCellFormulaValid); /// --main exits with zero
-    RUN_TEST(tr, TestSetGetCellCellRef); /// --main exits with zero
-    RUN_TEST(tr, TestSetGetCellFormulaZeroDivision); /// --main exits with zero
-    RUN_TEST(tr, TestPachkaHelps); /// --main exits with zero
+    RUN_TEST(tr, TestCustomCoutOutput); /// --main exits with zero
     return 0;
 }

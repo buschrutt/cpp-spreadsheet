@@ -52,6 +52,7 @@ std::vector<Position> Cell::GetReferencedCells() const {
     return impl_->GetReferencedCells();
 }
 
+//// Recursive call -- dependent cell update
 void Cell::ReferenceUpdate(Cell* node_ptr, std::set<Cell*> node_ptr_set, SheetInterface &sheet) {
     for (auto a : node_ptr_set){
         if (node_ptr == a) {
@@ -61,7 +62,7 @@ void Cell::ReferenceUpdate(Cell* node_ptr, std::set<Cell*> node_ptr_set, SheetIn
     node_ptr_set.emplace(node_ptr);
     for (auto a : node_ptr->cell_node_.next_ptr_set){
         ReferenceUpdate(a, node_ptr_set, sheet);
-        a->CashUpdate(a->GetText(), sheet);
+        a->CashUpdate(a->GetText(), sheet); //// Updates cash
     }
 }
 

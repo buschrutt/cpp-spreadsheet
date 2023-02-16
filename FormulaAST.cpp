@@ -255,7 +255,6 @@ public:
             return -1 * std::get<double>(operand_->Evaluate(sheet));
         }
         return std::get<double>(operand_->Evaluate(sheet));
-        //throw FormulaError("Evaluate() --unary operation: --type_ != Type::UnaryMinus");
     }
 
 private:
